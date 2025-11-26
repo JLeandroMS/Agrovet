@@ -1,0 +1,10 @@
+1;Concentrado Perros 20kg;25.5
+2;Concentrado Gatos 10kg;18.75
+3;Alimento Gallinas 40kg;32.0
+4;Alimento Caballos 25kg;45.0
+5;Pala Agrícola;12.99
+6;Rastrillo Metálico;9.99
+7;Guantes de Trabajo;3.5
+8;Vacuna Antipulgas;6.75
+9;Desparasitante Bovino;14.3
+10;Vitaminas Mascotas;7.2

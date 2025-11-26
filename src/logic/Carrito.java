@@ -10,51 +10,38 @@ public class Carrito {
         productos = new ArrayList<>();
     }
 
-    // ------------------------------------------------------------
-    // Agregar producto al carrito
-    // ------------------------------------------------------------
     public void agregarProducto(Producto producto) {
-        productos.add(producto);
-    }
-
-    // ------------------------------------------------------------
-    // Quitar producto por índice (opcional)
-    // ------------------------------------------------------------
-    public void eliminarProducto(int index) {
-        if (index >= 0 && index < productos.size()) {
-            productos.remove(index);
+        if (producto != null) {
+            productos.add(producto);
         }
     }
 
-    // ------------------------------------------------------------
-    // Obtener productos como array (para factura)
-    // ------------------------------------------------------------
-    public Producto[] obtenerProductosComoArray() {
-        return productos.toArray(new Producto[0]);
+    // ---------------- Nuevo método ----------------
+    public void eliminar(int indice) {
+        if (indice >= 0 && indice < productos.size()) {
+            productos.remove(indice);
+        }
     }
+    // ----------------------------------------------
 
-    // ------------------------------------------------------------
-    // Calcular total usando recursividad
-    // ------------------------------------------------------------
-    public double calcularTotal() {
-        return sumaRecursiva(0);
-    }
-
-    private double sumaRecursiva(int indice) {
-        if (indice == productos.size()) return 0;
-        return productos.get(indice).getPrecio() + sumaRecursiva(indice + 1);
-    }
-
-    // ------------------------------------------------------------
-    // Limpiar carrito
-    // ------------------------------------------------------------
     public void limpiar() {
         productos.clear();
     }
 
-    // ------------------------------------------------------------
-    // Obtener productos como lista (para mostrar en JTable)
-    // ------------------------------------------------------------
+    public double calcularTotal() {
+        double total = 0;
+
+        for (Producto p : productos) {
+            total += p.getPrecio();
+        }
+
+        return total;
+    }
+
+    public Producto[] obtenerProductosComoArray() {
+        return productos.toArray(new Producto[0]);
+    }
+
     public ArrayList<Producto> getProductos() {
         return productos;
     }

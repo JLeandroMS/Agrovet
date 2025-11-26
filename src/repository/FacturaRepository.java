@@ -1,96 +1,83 @@
 package repository;
 
 import logic.Factura;
+import logic.Producto;
 
 import java.io.*;
 import java.util.ArrayList;
 
 public class FacturaRepository {
 
-    private final String FILE_PATH = "data/facturas.txt";
-    private Factura[] facturas;
+    private final String FILE_NAME = "facturas.txt";
 
     public FacturaRepository() {
-        cargarFacturas();
-    }
-
-    // ------------------------------------------------------------
-    // Cargar todas las facturas desde el TXT
-    // ------------------------------------------------------------
-    private void cargarFacturas() {
-        ArrayList<String> bloque = new ArrayList<>();
-        ArrayList<Factura> lista = new ArrayList<>();
-
-        File archivo = new File(FILE_PATH);
+        File f = new File(FILE_NAME);
 
         try {
-            if (!archivo.exists()) {
-                archivo.getParentFile().mkdirs();
-                archivo.createNewFile();
+            if (!f.exists()) {
+                f.createNewFile();
+            }
+        } catch (Exception e) {
+            System.out.println("Error creando archivo de facturas: " + e.getMessage());
+        }
+    }
+
+    // =====================================================
+    // GUARDAR FACTURA
+    // =====================================================
+    public void guardarFactura(Factura factura) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME, true))) {
+
+            writer.write("CEDULA:" + factura.getCedula());
+            writer.newLine();
+
+            for (Producto p : factura.getProductos()) {
+                writer.write(p.getId() + "," + p.getNombre() + "," + p.getPrecio());
+                writer.newLine();
             }
 
-            BufferedReader br = new BufferedReader(new FileReader(archivo));
-            String line;
+            writer.write("TOTAL:" + factura.total());
+            writer.newLine();
+            writer.write("---");
+            writer.newLine();
 
-            while ((line = br.readLine()) != null) {
-                if (line.startsWith("-------------------------")) {
-                    // Se terminó una factura → convertir bloque a factura
-                    Factura f = Factura.fromTxt(bloque.toArray(new String[0]));
-                    if (f != null) lista.add(f);
-                    bloque.clear();
-                } else {
-                    bloque.add(line);
+        } catch (Exception e) {
+            System.out.println("Error guardando factura: " + e.getMessage());
+        }
+    }
+
+    // =====================================================
+    // BUSCAR FACTURAS POR CEDULA
+    // =====================================================
+    public ArrayList<String> buscarPorCedula(String cedula) {
+
+        ArrayList<String> resultados = new ArrayList<>();
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+            String linea;
+            boolean facturaEncontrada = false;
+            StringBuilder facturaCompleta = new StringBuilder();
+
+            while ((linea = reader.readLine()) != null) {
+
+                if (linea.startsWith("CEDULA:" + cedula)) {
+                    facturaEncontrada = true;
+                    facturaCompleta = new StringBuilder();
+                    facturaCompleta.append(linea).append("\n");
+                } else if (linea.equals("---")) {
+                    if (facturaEncontrada) {
+                        resultados.add(facturaCompleta.toString());
+                        facturaEncontrada = false;
+                    }
+                } else if (facturaEncontrada) {
+                    facturaCompleta.append(linea).append("\n");
                 }
             }
 
-            br.close();
-
-            // Convertir ArrayList → array
-            facturas = lista.toArray(new Factura[0]);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            facturas = new Factura[0];
-        }
-    }
-
-    public Factura[] getAll() {
-        return facturas;
-    }
-
-    // ------------------------------------------------------------
-    // Guardar UNA sola factura al final del archivo
-    // ------------------------------------------------------------
-    public void guardarFactura(Factura factura) {
-        File archivo = new File(FILE_PATH);
-        try {
-            BufferedWriter bw = new BufferedWriter(new FileWriter(archivo, true));
-            bw.write(factura.toTxt());
-            bw.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("Error buscando facturas: " + e.getMessage());
         }
 
-        // Actualizamos el array interno
-        cargarFacturas();
-    }
-
-    // ------------------------------------------------------------
-    // Buscar facturas por cédula usando recursividad
-    // ------------------------------------------------------------
-    public Factura[] buscarPorCedula(String cedula) {
-        ArrayList<Factura> resultado = new ArrayList<>();
-        buscarRecursivo(cedula, 0, resultado);
-        return resultado.toArray(new Factura[0]);
-    }
-
-    private void buscarRecursivo(String cedula, int index, ArrayList<Factura> lista) {
-        if (index == facturas.length) return;
-
-        if (facturas[index].getCedulaCliente().equalsIgnoreCase(cedula)) {
-            lista.add(facturas[index]);
-        }
-
-        buscarRecursivo(cedula, index + 1, lista);
+        return resultados;
     }
 }

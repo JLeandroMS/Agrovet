@@ -1,0 +1,257 @@
+package ui;
+
+import logic.Carrito;
+import logic.Producto;
+import logic.Factura;
+import repository.ProductoRepository;
+import repository.FacturaRepository;
+
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+
+public class MainMenu extends javax.swing.JFrame {
+
+    private ProductoRepository productoRepo;
+    private FacturaRepository facturaRepo;
+    private Carrito carrito;
+
+    public MainMenu() {
+        initComponents();
+
+        productoRepo = new ProductoRepository();
+        facturaRepo = new FacturaRepository();
+        carrito = new Carrito();
+
+        cargarTablaProductos();
+        cargarCarrito();
+    }
+
+    // ----------------------------------------------------------
+    //          CARGAR TABLA DE PRODUCTOS
+    // ----------------------------------------------------------
+    private void cargarTablaProductos() {
+        Producto[] productos = productoRepo.getAll();
+
+        DefaultTableModel model = (DefaultTableModel) tablaProductos.getModel();
+        model.setRowCount(0);
+
+        for (Producto p : productos) {
+            model.addRow(new Object[]{
+                    p.getId(),
+                    p.getNombre(),
+                    p.getPrecio()
+            });
+        }
+    }
+
+    // ----------------------------------------------------------
+    //          CARGAR TABLA DEL CARRITO
+    // ----------------------------------------------------------
+    private void cargarCarrito() {
+        DefaultTableModel model = (DefaultTableModel) tablaCarrito.getModel();
+        model.setRowCount(0);
+
+        for (Producto p : carrito.getProductos()) {
+            model.addRow(new Object[]{
+                    p.getId(),
+                    p.getNombre(),
+                    p.getPrecio()
+            });
+        }
+    }
+
+    // ----------------------------------------------------------
+    //                 MÉTODOS DE BOTONES
+    // ----------------------------------------------------------
+    private void agregarAlCarrito() {
+        int fila = tablaProductos.getSelectedRow();
+
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un producto.");
+            return;
+        }
+
+        int id = (int) tablaProductos.getValueAt(fila, 0);
+        Producto p = productoRepo.buscarPorId(id);
+
+        if (p != null) {
+            carrito.agregarProducto(p);
+            cargarCarrito();
+        }
+    }
+
+    private void eliminarProductoCarrito() {
+        int fila = tablaCarrito.getSelectedRow();
+
+        if (fila == -1) {
+            JOptionPane.showMessageDialog(this, "Seleccione un producto del carrito.");
+            return;
+        }
+
+        carrito.eliminar(fila);
+        cargarCarrito();
+    }
+
+    private void limpiarCarrito() {
+        carrito.limpiar();
+        cargarCarrito();
+    }
+
+    private void pagar() {
+        String cedula = txtCedula.getText().trim();
+
+        if (cedula.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese la cédula del cliente.");
+            return;
+        }
+
+        if (carrito.getProductos().isEmpty()) {
+            JOptionPane.showMessageDialog(this, "El carrito está vacío.");
+            return;
+        }
+
+        Factura factura = new Factura(cedula, carrito.obtenerProductosComoArray());
+        facturaRepo.guardarFactura(factura);
+
+        carrito.limpiar();
+        cargarCarrito();
+        txtCedula.setText("");
+
+        JOptionPane.showMessageDialog(this, "Pago realizado con éxito. Factura generada.");
+    }
+
+    private void abrirBuscadorFacturas() {
+        BuscarFacturaFrame b = new BuscarFacturaFrame();
+        b.setVisible(true);
+    }
+
+    // ----------------------------------------------------------
+    //                      INTERFAZ
+    // ----------------------------------------------------------
+    @SuppressWarnings("unchecked")
+    private void initComponents() {
+
+        jScrollPane1 = new javax.swing.JScrollPane();
+        tablaProductos = new javax.swing.JTable();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tablaCarrito = new javax.swing.JTable();
+        btnAgregar = new javax.swing.JButton();
+        btnEliminar = new javax.swing.JButton();
+        btnLimpiar = new javax.swing.JButton();
+        btnPagar = new javax.swing.JButton();
+        btnBuscarFactura = new javax.swing.JButton();
+        txtCedula = new javax.swing.JTextField();
+        lblCedula = new javax.swing.JLabel();
+
+        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setTitle("Agroveterinaria - Menú Principal");
+        setSize(900, 700);
+        setResizable(false);
+
+        // Tabla productos
+        tablaProductos.setModel(new javax.swing.table.DefaultTableModel(
+                new Object [][] {},
+                new String [] { "ID", "Nombre", "Precio" }
+        ));
+        jScrollPane1.setViewportView(tablaProductos);
+
+        // Tabla carrito
+        tablaCarrito.setModel(new javax.swing.table.DefaultTableModel(
+                new Object [][] {},
+                new String [] { "ID", "Nombre", "Precio" }
+        ));
+        jScrollPane2.setViewportView(tablaCarrito);
+
+        // Botones
+        btnAgregar.setText("Agregar al Carrito");
+        btnAgregar.addActionListener(evt -> agregarAlCarrito());
+
+        btnEliminar.setText("Eliminar Producto");
+        btnEliminar.addActionListener(evt -> eliminarProductoCarrito());
+
+        btnLimpiar.setText("Limpiar Carrito");
+        btnLimpiar.addActionListener(evt -> limpiarCarrito());
+
+        btnPagar.setText("PAGAR");
+        btnPagar.addActionListener(evt -> pagar());
+
+        btnBuscarFactura.setText("Buscar Facturas");
+        btnBuscarFactura.addActionListener(evt -> abrirBuscadorFacturas());
+
+        lblCedula.setText("Cédula Cliente:");
+
+        // ------------------- LAYOUT --------------------
+        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
+        getContentPane().setLayout(layout);
+
+        layout.setHorizontalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup().addContainerGap()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 880, Short.MAX_VALUE)
+                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 880, Short.MAX_VALUE)
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(btnAgregar)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(btnEliminar)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(btnLimpiar)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(btnPagar)
+                                                .addGap(0, 0, Short.MAX_VALUE))
+                                        .addGroup(layout.createSequentialGroup()
+                                                .addComponent(lblCedula)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 200,
+                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(btnBuscarFactura)
+                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                .addContainerGap())
+        );
+
+        layout.setVerticalGroup(
+                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(layout.createSequentialGroup().addContainerGap()
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 250,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(btnAgregar)
+                                        .addComponent(btnEliminar)
+                                        .addComponent(btnLimpiar)
+                                        .addComponent(btnPagar))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 250,
+                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                        .addComponent(lblCedula)
+                                        .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 28,
+                                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(btnBuscarFactura))
+                                .addContainerGap(20, Short.MAX_VALUE))
+        );
+
+        setLocationRelativeTo(null);
+    }
+
+    // ----------------------------------------------------------
+    //                  VARIABLES
+    // ----------------------------------------------------------
+    private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnEliminar;
+    private javax.swing.JButton btnLimpiar;
+    private javax.swing.JButton btnPagar;
+    private javax.swing.JButton btnBuscarFactura;
+    private javax.swing.JLabel lblCedula;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTable tablaProductos;
+    private javax.swing.JTable tablaCarrito;
+    private javax.swing.JTextField txtCedula;
+
+    public static void main(String args[]) {
+        java.awt.EventQueue.invokeLater(() -> new MainMenu().setVisible(true));
+    }
+}
