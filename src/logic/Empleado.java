@@ -1,16 +1,22 @@
 package logic;
 
-public class Cliente {
+public class Empleado {
     private String cedula;
     private String nombre;
     private int edad;
     private String telefono;
+    private String ocupacion;
+    private String tipo; // Veterinario o Casher
+    private double salario;
 
-    public Cliente(String cedula, String nombre, int edad, String telefono) {
+    public Empleado(String cedula, String nombre, int edad, String telefono, String ocupacion, String tipo, double salario) {
         this.cedula = cedula;
         this.nombre = nombre;
         this.edad = edad;
         this.telefono = telefono;
+        this.ocupacion = ocupacion;
+        this.tipo = tipo;
+        this.salario = salario;
     }
 
     public String getCedula() {
@@ -45,13 +51,40 @@ public class Cliente {
         this.telefono = telefono;
     }
 
+    public String getOcupacion() {
+        return ocupacion;
+    }
+
+    public void setOcupacion(String ocupacion) {
+        this.ocupacion = ocupacion;
+    }
+
+    public String getTipo() {
+        return tipo;
+    }
+
+    public void setTipo(String tipo) {
+        this.tipo = tipo;
+    }
+
+    public double getSalario() {
+        return salario;
+    }
+
+    public void setSalario(double salario) {
+        this.salario = salario;
+    }
+
     @Override
     public String toString() {
-        return "Cliente{" +
+        return "Empleado{" +
                 "cedula='" + cedula + '\'' +
                 ", nombre='" + nombre + '\'' +
                 ", edad=" + edad +
                 ", telefono='" + telefono + '\'' +
+                ", ocupacion='" + ocupacion + '\'' +
+                ", tipo='" + tipo + '\'' +
+                ", salario=" + salario +
                 '}';
     }
 }

@@ -3,8 +3,11 @@ package ui;
 import logic.Carrito;
 import logic.Producto;
 import logic.Factura;
+import logic.Cliente;
 import repository.ProductoRepository;
 import repository.FacturaRepository;
+import repository.ClienteRepository;
+import repository.EmpleadoRepository;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -14,6 +17,8 @@ public class MainMenu extends javax.swing.JFrame {
     private ProductoRepository productoRepo;
     private FacturaRepository facturaRepo;
     private Carrito carrito;
+    private ClienteRepository clienteRepo;
+    private EmpleadoRepository empleadoRepo;
 
     public MainMenu() {
         initComponents();
@@ -21,6 +26,8 @@ public class MainMenu extends javax.swing.JFrame {
         productoRepo = new ProductoRepository();
         facturaRepo = new FacturaRepository();
         carrito = new Carrito();
+        clienteRepo = new ClienteRepository();
+        empleadoRepo = new EmpleadoRepository();
 
         cargarTablaProductos();
         cargarCarrito();
@@ -105,6 +112,17 @@ public class MainMenu extends javax.swing.JFrame {
             return;
         }
 
+        Cliente cliente = clienteRepo.getById(cedula);
+        if (cliente == null) {
+            int opcion = JOptionPane.showConfirmDialog(this,
+                    "Cliente no encontrado. ¿Desea agregarlo?", "Cliente no encontrado",
+                    JOptionPane.YES_NO_OPTION);
+            if (opcion == JOptionPane.YES_OPTION) {
+                abrirAdministrarClientes(cedula);
+            }
+            return;
+        }
+
         if (carrito.getProductos().isEmpty()) {
             JOptionPane.showMessageDialog(this, "El carrito está vacío.");
             return;
@@ -125,6 +143,21 @@ public class MainMenu extends javax.swing.JFrame {
         b.setVisible(true);
     }
 
+    private void abrirAdministrarClientes(String cedula) {
+        AdministrarClientesFrame frame = new AdministrarClientesFrame(clienteRepo);
+        if (!cedula.isEmpty()) {
+            frame.setVisible(true);
+            // Se puede prellenar la cédula si se desea implementar
+        } else {
+            frame.setVisible(true);
+        }
+    }
+
+    private void abrirAdministrarEmpleados() {
+        AdministrarEmpleadosFrame frame = new AdministrarEmpleadosFrame(empleadoRepo);
+        frame.setVisible(true);
+    }
+
     // ----------------------------------------------------------
     //                      INTERFAZ
     // ----------------------------------------------------------
@@ -143,6 +176,10 @@ public class MainMenu extends javax.swing.JFrame {
         txtCedula = new javax.swing.JTextField();
         lblCedula = new javax.swing.JLabel();
 
+        // NUEVOS BOTONES
+        btnAdministrarClientes = new javax.swing.JButton();
+        btnAdministrarEmpleados = new javax.swing.JButton();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Agroveterinaria - Menú Principal");
         setSize(900, 700);
@@ -150,15 +187,15 @@ public class MainMenu extends javax.swing.JFrame {
 
         // Tabla productos
         tablaProductos.setModel(new javax.swing.table.DefaultTableModel(
-                new Object [][] {},
-                new String [] { "ID", "Nombre", "Precio" }
+                new Object[][]{},
+                new String[]{"ID", "Nombre", "Precio"}
         ));
         jScrollPane1.setViewportView(tablaProductos);
 
         // Tabla carrito
         tablaCarrito.setModel(new javax.swing.table.DefaultTableModel(
-                new Object [][] {},
-                new String [] { "ID", "Nombre", "Precio" }
+                new Object[][]{},
+                new String[]{"ID", "Nombre", "Precio"}
         ));
         jScrollPane2.setViewportView(tablaCarrito);
 
@@ -177,6 +214,12 @@ public class MainMenu extends javax.swing.JFrame {
 
         btnBuscarFactura.setText("Buscar Facturas");
         btnBuscarFactura.addActionListener(evt -> abrirBuscadorFacturas());
+
+        btnAdministrarClientes.setText("Administrar Clientes");
+        btnAdministrarClientes.addActionListener(evt -> abrirAdministrarClientes(""));
+
+        btnAdministrarEmpleados.setText("Administrar Empleados");
+        btnAdministrarEmpleados.addActionListener(evt -> abrirAdministrarEmpleados());
 
         lblCedula.setText("Cédula Cliente:");
 
@@ -197,7 +240,11 @@ public class MainMenu extends javax.swing.JFrame {
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(btnLimpiar)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnPagar)
+                                                .addComponent(btnBuscarFactura)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(btnAdministrarClientes)
+                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                                .addComponent(btnAdministrarEmpleados)
                                                 .addGap(0, 0, Short.MAX_VALUE))
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(lblCedula)
@@ -205,7 +252,7 @@ public class MainMenu extends javax.swing.JFrame {
                                                 .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 200,
                                                         javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnBuscarFactura)
+                                                .addComponent(btnPagar)
                                                 .addGap(0, 0, Short.MAX_VALUE)))
                                 .addContainerGap())
         );
@@ -220,7 +267,9 @@ public class MainMenu extends javax.swing.JFrame {
                                         .addComponent(btnAgregar)
                                         .addComponent(btnEliminar)
                                         .addComponent(btnLimpiar)
-                                        .addComponent(btnPagar))
+                                        .addComponent(btnBuscarFactura)
+                                        .addComponent(btnAdministrarClientes)
+                                        .addComponent(btnAdministrarEmpleados))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 250,
                                         javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -229,7 +278,7 @@ public class MainMenu extends javax.swing.JFrame {
                                         .addComponent(lblCedula)
                                         .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 28,
                                                 javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnBuscarFactura))
+                                        .addComponent(btnPagar))
                                 .addContainerGap(20, Short.MAX_VALUE))
         );
 
@@ -244,6 +293,8 @@ public class MainMenu extends javax.swing.JFrame {
     private javax.swing.JButton btnLimpiar;
     private javax.swing.JButton btnPagar;
     private javax.swing.JButton btnBuscarFactura;
+    private javax.swing.JButton btnAdministrarClientes;
+    private javax.swing.JButton btnAdministrarEmpleados;
     private javax.swing.JLabel lblCedula;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
