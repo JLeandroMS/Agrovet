@@ -11,6 +11,7 @@ import repository.EmpleadoRepository;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 
 public class MainMenu extends javax.swing.JFrame {
 
@@ -32,6 +33,7 @@ public class MainMenu extends javax.swing.JFrame {
         cargarTablaProductos();
         cargarCarrito();
     }
+    
 
     // ----------------------------------------------------------
     //          CARGAR TABLA DE PRODUCTOS
@@ -145,18 +147,14 @@ public class MainMenu extends javax.swing.JFrame {
 
     private void abrirAdministrarClientes(String cedula) {
         AdministrarClientesFrame frame = new AdministrarClientesFrame(clienteRepo);
-        if (!cedula.isEmpty()) {
-            frame.setVisible(true);
-            // Se puede prellenar la cédula si se desea implementar
-        } else {
-            frame.setVisible(true);
-        }
+        frame.setVisible(true);
     }
 
     private void abrirAdministrarEmpleados() {
         AdministrarEmpleadosFrame frame = new AdministrarEmpleadosFrame(empleadoRepo);
         frame.setVisible(true);
     }
+    
 
     // ----------------------------------------------------------
     //                      INTERFAZ
@@ -168,62 +166,77 @@ public class MainMenu extends javax.swing.JFrame {
         tablaProductos = new javax.swing.JTable();
         jScrollPane2 = new javax.swing.JScrollPane();
         tablaCarrito = new javax.swing.JTable();
-        btnAgregar = new javax.swing.JButton();
-        btnEliminar = new javax.swing.JButton();
-        btnLimpiar = new javax.swing.JButton();
-        btnPagar = new javax.swing.JButton();
-        btnBuscarFactura = new javax.swing.JButton();
+
+        // BOTONES ESTILO POS
+        btnAgregar = new POSButton("Agregar al Carrito");
+        btnEliminar = new POSButton("Eliminar Producto");
+        btnLimpiar = new POSButton("Limpiar Carrito");
+        btnPagar = new POSButton("💰 PAGAR");
+        btnBuscarFactura = new POSButton("Buscar Facturas");
+        btnAdministrarClientes = new POSButton("Administrar Clientes");
+        btnAdministrarEmpleados = new POSButton("Administrar Empleados");
+
         txtCedula = new javax.swing.JTextField();
         lblCedula = new javax.swing.JLabel();
 
-        // NUEVOS BOTONES
-        btnAdministrarClientes = new javax.swing.JButton();
-        btnAdministrarEmpleados = new javax.swing.JButton();
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Agroveterinaria - Menú Principal");
-        setSize(900, 700);
-        setResizable(false);
+        setSize(1000, 850);
+        setResizable(true);
 
-        // Tabla productos
+        //-----------------------------------------------------------
+        // TABLA PRODUCTOS (GRANDE + SCROLL)
+        //-----------------------------------------------------------
+        tablaProductos.setFont(new Font("Dialog", Font.BOLD, 18));
+        tablaProductos.setRowHeight(45);
+
         tablaProductos.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
                 new String[]{"ID", "Nombre", "Precio"}
         ));
-        jScrollPane1.setViewportView(tablaProductos);
 
-        // Tabla carrito
+        // Aumentar ancho de columnas
+        tablaProductos.getColumnModel().getColumn(0).setPreferredWidth(80);
+        tablaProductos.getColumnModel().getColumn(1).setPreferredWidth(300);
+        tablaProductos.getColumnModel().getColumn(2).setPreferredWidth(150);
+
+        jScrollPane1.setViewportView(tablaProductos);
+        jScrollPane1.setPreferredSize(new Dimension(900, 280));
+
+        //-----------------------------------------------------------
+        // TABLA CARRITO (GRANDE + SCROLL)
+        //-----------------------------------------------------------
+        tablaCarrito.setFont(new Font("Dialog", Font.BOLD, 18));
+        tablaCarrito.setRowHeight(45);
+
         tablaCarrito.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
                 new String[]{"ID", "Nombre", "Precio"}
         ));
+
         jScrollPane2.setViewportView(tablaCarrito);
+        jScrollPane2.setPreferredSize(new Dimension(900, 280));
 
-        // Botones
-        btnAgregar.setText("Agregar al Carrito");
+        //-----------------------------------------------------------
+        // ACCIONES DE BOTONES
+        //-----------------------------------------------------------
         btnAgregar.addActionListener(evt -> agregarAlCarrito());
-
-        btnEliminar.setText("Eliminar Producto");
         btnEliminar.addActionListener(evt -> eliminarProductoCarrito());
-
-        btnLimpiar.setText("Limpiar Carrito");
         btnLimpiar.addActionListener(evt -> limpiarCarrito());
-
-        btnPagar.setText("PAGAR");
         btnPagar.addActionListener(evt -> pagar());
-
-        btnBuscarFactura.setText("Buscar Facturas");
         btnBuscarFactura.addActionListener(evt -> abrirBuscadorFacturas());
-
-        btnAdministrarClientes.setText("Administrar Clientes");
         btnAdministrarClientes.addActionListener(evt -> abrirAdministrarClientes(""));
-
-        btnAdministrarEmpleados.setText("Administrar Empleados");
         btnAdministrarEmpleados.addActionListener(evt -> abrirAdministrarEmpleados());
 
         lblCedula.setText("Cédula Cliente:");
+        lblCedula.setFont(new Font("Dialog", Font.BOLD, 18));
 
-        // ------------------- LAYOUT --------------------
+        txtCedula.setFont(new Font("Dialog", Font.BOLD, 18));
+        txtCedula.setPreferredSize(new Dimension(200, 35));
+
+        //-----------------------------------------------------------
+        // LAYOUT ORIGINAL (NO ALTERADO)
+        //-----------------------------------------------------------
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
 
@@ -244,24 +257,20 @@ public class MainMenu extends javax.swing.JFrame {
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                                 .addComponent(btnAdministrarClientes)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnAdministrarEmpleados)
-                                                .addGap(0, 0, Short.MAX_VALUE))
+                                                .addComponent(btnAdministrarEmpleados))
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(lblCedula)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 200,
-                                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnPagar)
-                                                .addGap(0, 0, Short.MAX_VALUE)))
+                                                .addComponent(btnPagar)))
                                 .addContainerGap())
         );
 
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup().addContainerGap()
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 250,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnAgregar)
@@ -271,13 +280,11 @@ public class MainMenu extends javax.swing.JFrame {
                                         .addComponent(btnAdministrarClientes)
                                         .addComponent(btnAdministrarEmpleados))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 250,
-                                        javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(18, 18, 18)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(15)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lblCedula)
-                                        .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 28,
-                                                javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(btnPagar))
                                 .addContainerGap(20, Short.MAX_VALUE))
         );
@@ -304,5 +311,40 @@ public class MainMenu extends javax.swing.JFrame {
 
     public static void main(String args[]) {
         java.awt.EventQueue.invokeLater(() -> new MainMenu().setVisible(true));
+    }
+}
+
+
+// ===============================================================
+//                 BOTÓN PERSONALIZADO ESTILO POS
+// ===============================================================
+class POSButton extends JButton {
+
+    public POSButton(String text) {
+        super(text);
+        setFont(new Font("Dialog", Font.BOLD, 20));
+        setBackground(new Color(168, 208, 141));
+        setForeground(Color.BLACK);
+        setFocusPainted(false);
+        setBorderPainted(false);
+        setOpaque(true);
+        setPreferredSize(new Dimension(220, 60)); // Botón grande POS
+        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(120, 150, 100), 2),
+                BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
+
+        addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent e) {
+                setBackground(new Color(140, 230, 150));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent e) {
+                setBackground(new Color(168, 208, 141));
+            }
+        });
     }
 }

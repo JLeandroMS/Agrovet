@@ -5,3 +5,19 @@ CEDULA:605000344
 7,Guantes de Trabajo,3.5
 TOTAL:31.75
 ---
+CEDULA:1
+9,Desparasitante Bovino,14.3
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+4,Alimento Caballos 25kg,45.0
+TOTAL:85.28
+---
+CEDULA:1
+7,Guantes de Trabajo,3.5
+TOTAL:3.5
+---
+CEDULA:2
+5,Pala Agrícola,12.99
+3,Alimento Gallinas 40kg,32.0
+TOTAL:44.99
+---

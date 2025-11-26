@@ -4,6 +4,7 @@ import logic.Cliente;
 import repository.ClienteRepository;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -19,84 +20,143 @@ public class AdministrarClientesFrame extends JFrame {
     public AdministrarClientesFrame(ClienteRepository repo) {
         this.clienteRepo = repo;
         setTitle("Administrar Clientes");
-        setSize(600, 450);
+        setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+        setLayout(new BorderLayout(15, 15));
+        getContentPane().setBackground(new Color(245, 245, 245));
 
         initComponents();
         cargarTabla();
     }
 
     private void initComponents() {
-        // Panel formulario con GridBagLayout
-        JPanel panelFormulario = new JPanel(new GridBagLayout());
+
+        // ============================
+        // PANEL CONTENEDOR TIPO TARJETA
+        // ============================
+        JPanel card = new JPanel(new GridBagLayout());
+        card.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1, true),
+                new EmptyBorder(20, 20, 20, 20)
+        ));
+        card.setBackground(Color.WHITE);
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.insets = new Insets(10, 10, 10, 10);
         gbc.anchor = GridBagConstraints.WEST;
+
+        Font labelFont = new Font("Segoe UI", Font.BOLD, 16);
+        Font inputFont = new Font("Segoe UI", Font.PLAIN, 16);
+        Font buttonFont = new Font("Segoe UI", Font.BOLD, 16);
 
         int y = 0;
 
-        // Cédula
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        panelFormulario.add(new JLabel("Cédula:"), gbc);
-        gbc.gridx = 1;
-        txtCedula = new JTextField(15);
-        panelFormulario.add(txtCedula, gbc);
+        // CÉDULA
+        gbc.gridx = 0; gbc.gridy = y;
+        JLabel lblCedula = new JLabel("Cédula:");
+        lblCedula.setFont(labelFont);
+        card.add(lblCedula, gbc);
 
-        // Nombre
-        y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        panelFormulario.add(new JLabel("Nombre:"), gbc);
         gbc.gridx = 1;
-        txtNombre = new JTextField(15);
-        panelFormulario.add(txtNombre, gbc);
+        txtCedula = new JTextField(22);
+        txtCedula.setFont(inputFont);
+        txtCedula.setBorder(BorderFactory.createLineBorder(new Color(160, 160, 160)));
+        card.add(txtCedula, gbc);
 
-        // Edad
+        // NOMBRE
         y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        panelFormulario.add(new JLabel("Edad:"), gbc);
+        gbc.gridx = 0; gbc.gridy = y;
+        JLabel lblNombre = new JLabel("Nombre:");
+        lblNombre.setFont(labelFont);
+        card.add(lblNombre, gbc);
+
         gbc.gridx = 1;
-        txtEdad = new JTextField(15);
-        panelFormulario.add(txtEdad, gbc);
+        txtNombre = new JTextField(22);
+        txtNombre.setFont(inputFont);
+        txtNombre.setBorder(BorderFactory.createLineBorder(new Color(160, 160, 160)));
+        card.add(txtNombre, gbc);
 
-        // Teléfono
+        // EDAD
         y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        panelFormulario.add(new JLabel("Teléfono:"), gbc);
+        gbc.gridx = 0; gbc.gridy = y;
+        JLabel lblEdad = new JLabel("Edad:");
+        lblEdad.setFont(labelFont);
+        card.add(lblEdad, gbc);
+
         gbc.gridx = 1;
-        txtTelefono = new JTextField(15);
-        panelFormulario.add(txtTelefono, gbc);
+        txtEdad = new JTextField(22);
+        txtEdad.setFont(inputFont);
+        txtEdad.setBorder(BorderFactory.createLineBorder(new Color(160, 160, 160)));
+        card.add(txtEdad, gbc);
 
-        // Botones
+        // TELÉFONO
         y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
+        gbc.gridx = 0; gbc.gridy = y;
+        JLabel lblTelefono = new JLabel("Teléfono:");
+        lblTelefono.setFont(labelFont);
+        card.add(lblTelefono, gbc);
+
+        gbc.gridx = 1;
+        txtTelefono = new JTextField(22);
+        txtTelefono.setFont(inputFont);
+        txtTelefono.setBorder(BorderFactory.createLineBorder(new Color(160, 160, 160)));
+        card.add(txtTelefono, gbc);
+
+        // ============================
+        // BOTONES MODERNOS
+        // ============================
+
+        Color btnColor = new Color(52, 152, 219);
+        Color btnEliminarColor = new Color(231, 76, 60);
+
+        y++;
+        gbc.gridx = 0; gbc.gridy = y; gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+
+        JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
+        panelBotones.setBackground(Color.WHITE);
+
         btnAgregar = new JButton("Agregar");
+        btnAgregar.setFont(buttonFont);
+        btnAgregar.setBackground(btnColor);
+        btnAgregar.setForeground(Color.WHITE);
+        btnAgregar.setFocusPainted(false);
+        btnAgregar.setBorder(new EmptyBorder(8, 20, 8, 20));
         btnAgregar.addActionListener(e -> agregarCliente());
-        panelFormulario.add(btnAgregar, gbc);
+        panelBotones.add(btnAgregar);
 
-        gbc.gridx = 1;
         btnModificar = new JButton("Modificar");
+        btnModificar.setFont(buttonFont);
+        btnModificar.setBackground(new Color(46, 204, 113));
+        btnModificar.setForeground(Color.WHITE);
+        btnModificar.setFocusPainted(false);
+        btnModificar.setBorder(new EmptyBorder(8, 20, 8, 20));
         btnModificar.addActionListener(e -> modificarCliente());
-        panelFormulario.add(btnModificar, gbc);
+        panelBotones.add(btnModificar);
 
-        y++;
-        gbc.gridx = 0;
-        gbc.gridy = y;
-        gbc.gridwidth = 2;
         btnEliminar = new JButton("Eliminar");
+        btnEliminar.setFont(buttonFont);
+        btnEliminar.setBackground(btnEliminarColor);
+        btnEliminar.setForeground(Color.WHITE);
+        btnEliminar.setFocusPainted(false);
+        btnEliminar.setBorder(new EmptyBorder(8, 20, 8, 20));
         btnEliminar.addActionListener(e -> eliminarCliente());
-        panelFormulario.add(btnEliminar, gbc);
+        panelBotones.add(btnEliminar);
 
-        add(panelFormulario, BorderLayout.NORTH);
+        card.add(panelBotones, gbc);
 
-        // Tabla
+        add(card, BorderLayout.NORTH);
+
+        // ============================
+        // TABLA MODERNA
+        // ============================
+
         tablaClientes = new JTable();
+        tablaClientes.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        tablaClientes.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+        tablaClientes.setRowHeight(26);
+
         tablaClientes.setModel(new DefaultTableModel(
                 new Object[][]{},
                 new String[]{"Cédula", "Nombre", "Edad", "Teléfono"}
@@ -117,7 +177,9 @@ public class AdministrarClientesFrame extends JFrame {
             }
         });
 
-        add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(tablaClientes);
+        scroll.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(scroll, BorderLayout.CENTER);
     }
 
     private void cargarTabla() {
@@ -144,28 +206,28 @@ public class AdministrarClientesFrame extends JFrame {
             return;
         }
 
+        int edad;
+        try {
+            edad = Integer.parseInt(edadStr);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Edad inválida.");
+            return;
+        }
+
         if (clienteRepo.getById(cedula) != null) {
             JOptionPane.showMessageDialog(this, "La cédula ya existe.");
             return;
         }
 
-        int edad;
-        try {
-            edad = Integer.parseInt(edadStr);
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Edad inválida.");
-            return;
-        }
-
-        Cliente cliente = new Cliente(cedula, nombre, edad, telefono);
-        clienteRepo.add(cliente);
+        clienteRepo.add(new Cliente(cedula, nombre, edad, telefono));
         cargarTabla();
-        limpiarFormulario();
+        limpiar();
     }
 
     private void modificarCliente() {
         String cedula = txtCedula.getText().trim();
         Cliente existente = clienteRepo.getById(cedula);
+
         if (existente == null) {
             JOptionPane.showMessageDialog(this, "Cliente no encontrado.");
             return;
@@ -183,7 +245,7 @@ public class AdministrarClientesFrame extends JFrame {
         int edad;
         try {
             edad = Integer.parseInt(edadStr);
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Edad inválida.");
             return;
         }
@@ -191,27 +253,24 @@ public class AdministrarClientesFrame extends JFrame {
         existente.setNombre(nombre);
         existente.setEdad(edad);
         existente.setTelefono(telefono);
+
         clienteRepo.update(existente);
         cargarTabla();
-        limpiarFormulario();
+        limpiar();
     }
 
     private void eliminarCliente() {
         String cedula = txtCedula.getText().trim();
-        if (cedula.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Ingrese la cédula para eliminar.");
-            return;
-        }
 
         if (clienteRepo.delete(cedula)) {
             cargarTabla();
-            limpiarFormulario();
+            limpiar();
         } else {
             JOptionPane.showMessageDialog(this, "Cliente no encontrado.");
         }
     }
 
-    private void limpiarFormulario() {
+    private void limpiar() {
         txtCedula.setText("");
         txtNombre.setText("");
         txtEdad.setText("");
