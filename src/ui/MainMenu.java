@@ -54,47 +54,37 @@ public class MainMenu extends javax.swing.JFrame {
     }
 
     // ----------------------------------------------------------
-    //          CARGAR TABLA DEL CARRITO
+    //          CARGAR TABLA DEL CARRITO (AGRUPADA)
     // ----------------------------------------------------------
-   private void cargarCarrito() {
-    DefaultTableModel model = (DefaultTableModel) tablaCarrito.getModel();
-    model.setRowCount(0);
+    private void cargarCarrito() {
+        DefaultTableModel model = (DefaultTableModel) tablaCarrito.getModel();
+        model.setRowCount(0);
 
-    java.util.List<Producto> productos = carrito.getProductos();  // ← AQUÍ EL CAMBIO
+        java.util.List<Producto> productos = carrito.getProductos();
 
-    // Mapa temporal para agrupar por nombre
-    java.util.Map<String, Double> mapaPrecios = new java.util.HashMap<>();
-    java.util.Map<String, Integer> mapaCantidad = new java.util.HashMap<>();
+        java.util.Map<String, Double> precios = new java.util.HashMap<>();
+        java.util.Map<String, Integer> cantidades = new java.util.HashMap<>();
 
-    for (Producto p : productos) {
-        if (p == null) continue;
+        for (Producto p : productos) {
+            if (p == null) continue;
 
-        String nombre = p.getNombre();
-        double precio = p.getPrecio();
+            String nombre = p.getNombre();
+            precios.put(nombre, precios.getOrDefault(nombre, 0.0) + p.getPrecio());
+            cantidades.put(nombre, cantidades.getOrDefault(nombre, 0) + 1);
+        }
 
-        // Sumar precios de productos repetidos
-        mapaPrecios.put(nombre, mapaPrecios.getOrDefault(nombre, 0.0) + precio);
-
-        // Contar cuántos hay
-        mapaCantidad.put(nombre, mapaCantidad.getOrDefault(nombre, 0) + 1);
+        for (String nombre : precios.keySet()) {
+            model.addRow(new Object[]{
+                    cantidades.get(nombre),
+                    nombre,
+                    precios.get(nombre)
+            });
+        }
     }
-
-    // Mostrar productos agrupados
-    for (String nombre : mapaPrecios.keySet()) {
-        double precioTotal = mapaPrecios.get(nombre);
-        int cantidad = mapaCantidad.get(nombre);
-
-        model.addRow(new Object[]{
-                cantidad,       // Cantidad
-                nombre,
-                precioTotal     // Precio total sumado
-        });
-    }
-}
 
 
     // ----------------------------------------------------------
-    //                 MÉTODOS DE BOTONES
+    //                 MÉTODOS BOTONES
     // ----------------------------------------------------------
     private void agregarAlCarrito() {
         int fila = tablaProductos.getSelectedRow();
@@ -140,9 +130,8 @@ public class MainMenu extends javax.swing.JFrame {
 
         Cliente cliente = clienteRepo.getById(cedula);
         if (cliente == null) {
-            int opcion = JOptionPane.showConfirmDialog(this,
-                    "Cliente no encontrado. ¿Desea agregarlo?", "Cliente no encontrado",
-                    JOptionPane.YES_NO_OPTION);
+            int opcion = JOptionPane.showConfirmDialog(this, "Cliente no encontrado. ¿Desea agregarlo?",
+                    "Cliente no encontrado", JOptionPane.YES_NO_OPTION);
             if (opcion == JOptionPane.YES_OPTION) {
                 abrirAdministrarClientes(cedula);
             }
@@ -178,7 +167,7 @@ public class MainMenu extends javax.swing.JFrame {
         AdministrarEmpleadosFrame frame = new AdministrarEmpleadosFrame(empleadoRepo);
         frame.setVisible(true);
     }
-    
+
 
     // ----------------------------------------------------------
     //                      INTERFAZ
@@ -191,59 +180,50 @@ public class MainMenu extends javax.swing.JFrame {
         jScrollPane2 = new javax.swing.JScrollPane();
         tablaCarrito = new javax.swing.JTable();
 
-        // BOTONES ESTILO POS
-        btnAgregar = new POSButton("Agregar al Carrito");
-        btnEliminar = new POSButton("Eliminar Producto");
-        btnLimpiar = new POSButton("Limpiar Carrito");
+        btnAgregar = new POSButton("Agregar");
+        btnEliminar = new POSButton("Eliminar");
+        btnLimpiar = new POSButton("Limpiar");
         btnPagar = new POSButton("💰 PAGAR");
-        btnBuscarFactura = new POSButton("Buscar Facturas");
-        btnAdministrarClientes = new POSButton("Administrar Clientes");
-        btnAdministrarEmpleados = new POSButton("Administrar Empleados");
+        btnBuscarFactura = new POSButton("Facturas");
+        btnAdministrarClientes = new POSButton("Clientes");
+        btnAdministrarEmpleados = new POSButton("Empleados");
 
         txtCedula = new javax.swing.JTextField();
         lblCedula = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setTitle("Agroveterinaria - Menú Principal");
-        setSize(1000, 850);
-        setResizable(true);
 
-        //-----------------------------------------------------------
-        // TABLA PRODUCTOS (GRANDE + SCROLL)
-        //-----------------------------------------------------------
+        // 👇 ADAPTADO PARA PANTALLA 1024×768
+        setSize(1024, 768);
+        setResizable(false);
+        setLocationRelativeTo(null);
+
+        // TABLA PRODUCTOS
         tablaProductos.setFont(new Font("Dialog", Font.BOLD, 18));
-        tablaProductos.setRowHeight(45);
+        tablaProductos.setRowHeight(40);
 
         tablaProductos.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
                 new String[]{"ID", "Nombre", "Precio"}
         ));
 
-        // Aumentar ancho de columnas
-        tablaProductos.getColumnModel().getColumn(0).setPreferredWidth(80);
-        tablaProductos.getColumnModel().getColumn(1).setPreferredWidth(300);
-        tablaProductos.getColumnModel().getColumn(2).setPreferredWidth(150);
-
         jScrollPane1.setViewportView(tablaProductos);
-        jScrollPane1.setPreferredSize(new Dimension(900, 280));
+        jScrollPane1.setPreferredSize(new Dimension(900, 200));
 
-        //-----------------------------------------------------------
-        // TABLA CARRITO (GRANDE + SCROLL)
-        //-----------------------------------------------------------
+        // TABLA CARRITO (CORREGIDA)
         tablaCarrito.setFont(new Font("Dialog", Font.BOLD, 18));
-        tablaCarrito.setRowHeight(45);
+        tablaCarrito.setRowHeight(40);
 
         tablaCarrito.setModel(new javax.swing.table.DefaultTableModel(
                 new Object[][]{},
-                new String[]{"ID", "Nombre", "Precio"}
+                new String[]{"Cantidad", "Producto", "Subtotal"}
         ));
 
         jScrollPane2.setViewportView(tablaCarrito);
-        jScrollPane2.setPreferredSize(new Dimension(900, 280));
+        jScrollPane2.setPreferredSize(new Dimension(900, 200));
 
-        //-----------------------------------------------------------
-        // ACCIONES DE BOTONES
-        //-----------------------------------------------------------
+        // ACCIONES
         btnAgregar.addActionListener(evt -> agregarAlCarrito());
         btnEliminar.addActionListener(evt -> eliminarProductoCarrito());
         btnLimpiar.addActionListener(evt -> limpiarCarrito());
@@ -258,9 +238,7 @@ public class MainMenu extends javax.swing.JFrame {
         txtCedula.setFont(new Font("Dialog", Font.BOLD, 18));
         txtCedula.setPreferredSize(new Dimension(200, 35));
 
-        //-----------------------------------------------------------
-        // LAYOUT ORIGINAL (NO ALTERADO)
-        //-----------------------------------------------------------
+        // LAYOUT (AJUSTADO A 1024×768)
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
 
@@ -268,8 +246,8 @@ public class MainMenu extends javax.swing.JFrame {
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup().addContainerGap()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 880, Short.MAX_VALUE)
-                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 880, Short.MAX_VALUE)
+                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
+                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
                                         .addGroup(layout.createSequentialGroup()
                                                 .addComponent(btnAgregar)
                                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
@@ -294,7 +272,7 @@ public class MainMenu extends javax.swing.JFrame {
         layout.setVerticalGroup(
                 layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                         .addGroup(layout.createSequentialGroup().addContainerGap()
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(btnAgregar)
@@ -304,21 +282,18 @@ public class MainMenu extends javax.swing.JFrame {
                                         .addComponent(btnAdministrarClientes)
                                         .addComponent(btnAdministrarEmpleados))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 280, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(15)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                         .addComponent(lblCedula)
                                         .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(btnPagar))
-                                .addContainerGap(20, Short.MAX_VALUE))
+                                .addContainerGap(15, Short.MAX_VALUE))
         );
-
-        setLocationRelativeTo(null);
     }
 
-    // ----------------------------------------------------------
-    //                  VARIABLES
-    // ----------------------------------------------------------
+
+    // VARIABLES
     private javax.swing.JButton btnAgregar;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnLimpiar;
@@ -346,13 +321,16 @@ class POSButton extends JButton {
 
     public POSButton(String text) {
         super(text);
-        setFont(new Font("Dialog", Font.BOLD, 20));
+        setFont(new Font("Dialog", Font.BOLD, 18));
         setBackground(new Color(168, 208, 141));
         setForeground(Color.BLACK);
         setFocusPainted(false);
         setBorderPainted(false);
         setOpaque(true);
-        setPreferredSize(new Dimension(220, 60)); // Botón grande POS
+
+        // 👇 BOTONES MÁS COMPACTOS (PARA 1024PX DE ANCHO)
+        setPreferredSize(new Dimension(150, 55));
+
         setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         setBorder(BorderFactory.createCompoundBorder(

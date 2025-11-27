@@ -31,3 +31,56 @@ CEDULA:111111111
 5,Pala Agrícola,12.99
 TOTAL:135.95000000000002
 ---
+CEDULA:604980715
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+1,Concentrado Perros 20kg,25.5
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+2,Concentrado Gatos 10kg,18.75
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+TOTAL:748.0200000000002
+---
+CEDULA:604980714
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+5,Pala Agrícola,12.99
+TOTAL:51.96
+---
