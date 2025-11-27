@@ -56,18 +56,42 @@ public class MainMenu extends javax.swing.JFrame {
     // ----------------------------------------------------------
     //          CARGAR TABLA DEL CARRITO
     // ----------------------------------------------------------
-    private void cargarCarrito() {
-        DefaultTableModel model = (DefaultTableModel) tablaCarrito.getModel();
-        model.setRowCount(0);
+   private void cargarCarrito() {
+    DefaultTableModel model = (DefaultTableModel) tablaCarrito.getModel();
+    model.setRowCount(0);
 
-        for (Producto p : carrito.getProductos()) {
-            model.addRow(new Object[]{
-                    p.getId(),
-                    p.getNombre(),
-                    p.getPrecio()
-            });
-        }
+    java.util.List<Producto> productos = carrito.getProductos();  // ← AQUÍ EL CAMBIO
+
+    // Mapa temporal para agrupar por nombre
+    java.util.Map<String, Double> mapaPrecios = new java.util.HashMap<>();
+    java.util.Map<String, Integer> mapaCantidad = new java.util.HashMap<>();
+
+    for (Producto p : productos) {
+        if (p == null) continue;
+
+        String nombre = p.getNombre();
+        double precio = p.getPrecio();
+
+        // Sumar precios de productos repetidos
+        mapaPrecios.put(nombre, mapaPrecios.getOrDefault(nombre, 0.0) + precio);
+
+        // Contar cuántos hay
+        mapaCantidad.put(nombre, mapaCantidad.getOrDefault(nombre, 0) + 1);
     }
+
+    // Mostrar productos agrupados
+    for (String nombre : mapaPrecios.keySet()) {
+        double precioTotal = mapaPrecios.get(nombre);
+        int cantidad = mapaCantidad.get(nombre);
+
+        model.addRow(new Object[]{
+                cantidad,       // Cantidad
+                nombre,
+                precioTotal     // Precio total sumado
+        });
+    }
+}
+
 
     // ----------------------------------------------------------
     //                 MÉTODOS DE BOTONES

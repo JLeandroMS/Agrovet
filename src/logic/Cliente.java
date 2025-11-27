@@ -1,15 +1,14 @@
 package logic;
 
 public class Cliente {
+
     private String cedula;
     private String nombre;
-    private int edad;
     private String telefono;
 
-    public Cliente(String cedula, String nombre, int edad, String telefono) {
+    public Cliente(String cedula, String nombre, String telefono) {
         this.cedula = cedula;
         this.nombre = nombre;
-        this.edad = edad;
         this.telefono = telefono;
     }
 
@@ -29,14 +28,6 @@ public class Cliente {
         this.nombre = nombre;
     }
 
-    public int getEdad() {
-        return edad;
-    }
-
-    public void setEdad(int edad) {
-        this.edad = edad;
-    }
-
     public String getTelefono() {
         return telefono;
     }
@@ -50,7 +41,6 @@ public class Cliente {
         return "Cliente{" +
                 "cedula='" + cedula + '\'' +
                 ", nombre='" + nombre + '\'' +
-                ", edad=" + edad +
                 ", telefono='" + telefono + '\'' +
                 '}';
     }
