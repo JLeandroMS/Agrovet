@@ -12,107 +12,145 @@ import repository.EmpleadoRepository;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 
-public class MainMenu extends javax.swing.JFrame {
+/**
+ * MainMenu - Full screen POS integrado con stock en productos.
+ *
+ * Requiere que exista la clase Carrito con métodos:
+ *   List<Producto> getProductos()
+ *   void agregarProducto(Producto p)
+ *   void eliminar(int index)  // elimina en la lista interna por índice
+ *   void limpiar()
+ *
+ * Y FacturaRepository.guardar(Factura) (se asume presente).
+ */
+public class MainMenu extends JFrame {
 
-    private ProductoRepository productoRepo;
-    private FacturaRepository facturaRepo;
-    private Carrito carrito;
-    private ClienteRepository clienteRepo;
-    private EmpleadoRepository empleadoRepo;
+    private final ProductoRepository productoRepo;
+    private final FacturaRepository facturaRepo;
+    private final Carrito carrito;
+    private final ClienteRepository clienteRepo;
+    private final EmpleadoRepository empleadoRepo;
+
+    private JTable tablaProductos, tablaCarrito;
+    private JTextField txtCedula;
+    private JButton btnAgregar, btnEliminar, btnLimpiar, btnPagar;
+    private JButton btnFacturas, btnClientes, btnEmpleados;
+    private JLabel lblTotalValue;
 
     public MainMenu() {
-        initComponents();
-
         productoRepo = new ProductoRepository();
         facturaRepo = new FacturaRepository();
         carrito = new Carrito();
         clienteRepo = new ClienteRepository();
         empleadoRepo = new EmpleadoRepository();
 
+        initComponents();
+
         cargarTablaProductos();
         cargarCarrito();
     }
-    
 
-    // ----------------------------------------------------------
-    //          CARGAR TABLA DE PRODUCTOS
-    // ----------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // CARGA DE TABLAS
+    // ---------------------------------------------------------------------
     private void cargarTablaProductos() {
-        Producto[] productos = productoRepo.getAll();
-
         DefaultTableModel model = (DefaultTableModel) tablaProductos.getModel();
         model.setRowCount(0);
+
+        Producto[] productos = productoRepo.getAll();
+        if (productos == null) return;
 
         for (Producto p : productos) {
             model.addRow(new Object[]{
                     p.getId(),
                     p.getNombre(),
-                    p.getPrecio()
+                    "₡" + String.format("%,.0f", p.getPrecio()),
+                    p.getStock()
             });
         }
     }
 
-    // ----------------------------------------------------------
-    //          CARGAR TABLA DEL CARRITO (AGRUPADA)
-    // ----------------------------------------------------------
     private void cargarCarrito() {
         DefaultTableModel model = (DefaultTableModel) tablaCarrito.getModel();
         model.setRowCount(0);
 
-        java.util.List<Producto> productos = carrito.getProductos();
+        List<Producto> lista = carrito.getProductos();
+        Map<Integer, Agregado> mapa = new LinkedHashMap<>();
 
-        java.util.Map<String, Double> precios = new java.util.HashMap<>();
-        java.util.Map<String, Integer> cantidades = new java.util.HashMap<>();
-
-        for (Producto p : productos) {
+        for (Producto p : lista) {
             if (p == null) continue;
-
-            String nombre = p.getNombre();
-            precios.put(nombre, precios.getOrDefault(nombre, 0.0) + p.getPrecio());
-            cantidades.put(nombre, cantidades.getOrDefault(nombre, 0) + 1);
+            mapa.putIfAbsent(p.getId(), new Agregado(p.getId(), p.getNombre(), p.getPrecio()));
+            mapa.get(p.getId()).add(p);
         }
 
-        for (String nombre : precios.keySet()) {
+        double total = 0;
+        for (Agregado ag : mapa.values()) {
             model.addRow(new Object[]{
-                    cantidades.get(nombre),
-                    nombre,
-                    precios.get(nombre)
+                    ag.cantidad,
+                    ag.nombre,
+                    "₡" + String.format("%,.0f", ag.subtotal)
             });
+            total += ag.subtotal;
         }
+
+        lblTotalValue.setText("₡" + String.format("%,.0f", total));
     }
 
+    private Producto[] buildFacturaProductos() {
+        return carrito.getProductos().toArray(new Producto[0]);
+    }
 
-    // ----------------------------------------------------------
-    //                 MÉTODOS BOTONES
-    // ----------------------------------------------------------
+    // ---------------------------------------------------------------------
+    // ACCIONES
+    // ---------------------------------------------------------------------
     private void agregarAlCarrito() {
         int fila = tablaProductos.getSelectedRow();
-
         if (fila == -1) {
             JOptionPane.showMessageDialog(this, "Seleccione un producto.");
             return;
         }
 
-        int id = (int) tablaProductos.getValueAt(fila, 0);
+        Object idObj = tablaProductos.getValueAt(fila, 0);
+        int id = (idObj instanceof Integer) ? (Integer) idObj : Integer.parseInt(idObj.toString());
         Producto p = productoRepo.buscarPorId(id);
-
-        if (p != null) {
-            carrito.agregarProducto(p);
-            cargarCarrito();
+        if (p == null) {
+            JOptionPane.showMessageDialog(this, "Producto no encontrado.");
+            return;
         }
+
+        if (p.getStock() <= 0) {
+            JOptionPane.showMessageDialog(this, "No hay stock disponible de: " + p.getNombre());
+            return;
+        }
+
+        // agregamos al carrito (la reducción real de stock se hace al pagar)
+        carrito.agregarProducto(p);
+        cargarCarrito();
     }
 
     private void eliminarProductoCarrito() {
         int fila = tablaCarrito.getSelectedRow();
-
         if (fila == -1) {
-            JOptionPane.showMessageDialog(this, "Seleccione un producto del carrito.");
+            JOptionPane.showMessageDialog(this, "Seleccione una fila en el carrito (agrupada).");
             return;
         }
 
-        carrito.eliminar(fila);
-        cargarCarrito();
+        // al mostrar el carrito agrupado solo tenemos nombre; buscamos primer índice en la lista original
+        String nombre = tablaCarrito.getValueAt(fila, 1).toString();
+
+        List<Producto> lista = carrito.getProductos();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getNombre().equals(nombre)) {
+                carrito.eliminar(i);
+                cargarCarrito();
+                return;
+            }
+        }
+
+        JOptionPane.showMessageDialog(this, "No se encontró el producto en el carrito interno.");
     }
 
     private void limpiarCarrito() {
@@ -121,233 +159,251 @@ public class MainMenu extends javax.swing.JFrame {
     }
 
     private void pagar() {
-        String cedula = txtCedula.getText().trim();
-
-        if (cedula.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Ingrese la cédula del cliente.");
-            return;
-        }
-
-        Cliente cliente = clienteRepo.getById(cedula);
-        if (cliente == null) {
-            int opcion = JOptionPane.showConfirmDialog(this, "Cliente no encontrado. ¿Desea agregarlo?",
-                    "Cliente no encontrado", JOptionPane.YES_NO_OPTION);
-            if (opcion == JOptionPane.YES_OPTION) {
-                abrirAdministrarClientes(cedula);
-            }
-            return;
-        }
-
         if (carrito.getProductos().isEmpty()) {
             JOptionPane.showMessageDialog(this, "El carrito está vacío.");
             return;
         }
 
-        Factura factura = new Factura(cedula, carrito.obtenerProductosComoArray());
-        facturaRepo.guardar(factura);
+        String ced = txtCedula.getText().trim();
+        if (ced.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Ingrese la cédula del cliente.");
+            return;
+        }
 
+        Cliente c = clienteRepo.getById(ced);
+        if (c == null) {
+            int opt = JOptionPane.showConfirmDialog(this, "Cliente no encontrado. ¿Desea registrarlo?", "Cliente", JOptionPane.YES_NO_OPTION);
+            if (opt == JOptionPane.YES_OPTION) {
+                new AdministrarClientesFrame(clienteRepo).setVisible(true);
+            }
+            return;
+        }
 
+        // Agrupar para conocer cantidades por producto (id)
+        List<Producto> lista = carrito.getProductos();
+        Map<Integer, Integer> cantidades = new LinkedHashMap<>();
+        for (Producto p : lista) {
+            cantidades.put(p.getId(), cantidades.getOrDefault(p.getId(), 0) + 1);
+        }
+
+        // Verificar stock suficiente para todos los productos
+        for (Map.Entry<Integer, Integer> e : cantidades.entrySet()) {
+            int id = e.getKey();
+            int qty = e.getValue();
+            Producto prod = productoRepo.buscarPorId(id);
+            if (prod == null) {
+                JOptionPane.showMessageDialog(this, "Producto en carrito no existe (id=" + id + ").");
+                return;
+            }
+            if (prod.getStock() < qty) {
+                JOptionPane.showMessageDialog(this, "Stock insuficiente para " + prod.getNombre() + ". Disponible: " + prod.getStock() + ", requerido: " + qty);
+                return;
+            }
+        }
+
+        // Reducir stock en repositorio
+        for (Map.Entry<Integer, Integer> e : cantidades.entrySet()) {
+            productoRepo.reducirStock(e.getKey(), e.getValue());
+        }
+
+        // Crear y guardar factura
+        Factura factura = new Factura(ced, buildFacturaProductos());
+        try {
+            facturaRepo.guardar(factura); // se asume existencia
+        } catch (Exception ex) {
+            // si falla guardar, revertir stock (intento simple)
+            for (Map.Entry<Integer, Integer> e : cantidades.entrySet()) {
+                productoRepo.aumentarStock(e.getKey(), e.getValue());
+            }
+            JOptionPane.showMessageDialog(this, "Error al guardar factura: " + ex.getMessage());
+            return;
+        }
+
+        JOptionPane.showMessageDialog(this, "Pago completado. Factura guardada.");
         carrito.limpiar();
         cargarCarrito();
-        txtCedula.setText("");
-
-        JOptionPane.showMessageDialog(this, "Pago realizado con éxito. Factura generada.");
+        cargarTablaProductos(); // refrescar stock mostrado
     }
 
-    private void abrirBuscadorFacturas() {
-        BuscarFacturaFrame b = new BuscarFacturaFrame();
-        b.setVisible(true);
-    }
-
-    private void abrirAdministrarClientes(String cedula) {
-        AdministrarClientesFrame frame = new AdministrarClientesFrame(clienteRepo);
-        frame.setVisible(true);
-    }
-
-    private void abrirAdministrarEmpleados() {
-        AdministrarEmpleadosFrame frame = new AdministrarEmpleadosFrame(empleadoRepo);
-        frame.setVisible(true);
-    }
-
-
-    // ----------------------------------------------------------
-    //                      INTERFAZ
-    // ----------------------------------------------------------
-    @SuppressWarnings("unchecked")
+    // ---------------------------------------------------------------------
+    // UI - FULL SCREEN + BOTONES PEGADOS
+    // ---------------------------------------------------------------------
     private void initComponents() {
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tablaProductos = new javax.swing.JTable();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        tablaCarrito = new javax.swing.JTable();
+        // FULL SCREEN
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
 
-        btnAgregar = new POSButton("Agregar");
-        btnEliminar = new POSButton("Eliminar");
-        btnLimpiar = new POSButton("Limpiar");
-        btnPagar = new POSButton("💰 PAGAR");
-        btnBuscarFactura = new POSButton("Facturas");
-        btnAdministrarClientes = new POSButton("Clientes");
-        btnAdministrarEmpleados = new POSButton("Empleados");
+        setTitle("POS Veterinaria - Full Screen");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        txtCedula = new javax.swing.JTextField();
-        lblCedula = new javax.swing.JLabel();
+        Container cp = getContentPane();
+        cp.setLayout(new BorderLayout());
+        cp.setBackground(new Color(245, 247, 246));
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-        setTitle("Agroveterinaria - Menú Principal");
+        // HEADER
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(new Color(16, 185, 129));
+        header.setBorder(BorderFactory.createEmptyBorder(15, 10, 15, 10));
 
-        // 👇 ADAPTADO PARA PANTALLA 1024×768
-        setSize(1024, 768);
-        setResizable(false);
-        setLocationRelativeTo(null);
+        JLabel title = new JLabel("Agroveterinaria - POS", SwingConstants.CENTER);
+        title.setFont(new Font("Segoe UI", Font.BOLD, 34));
+        title.setForeground(Color.WHITE);
+        header.add(title, BorderLayout.CENTER);
+
+        cp.add(header, BorderLayout.NORTH);
+
+        // LEFT MENU — buttons closer together
+        JPanel left = new JPanel();
+        left.setBackground(new Color(245, 247, 246));
+        left.setLayout(new BoxLayout(left, BoxLayout.Y_AXIS));
+        left.setPreferredSize(new Dimension(320, 0)); // más ancho para botones grandes
+
+        btnAgregar   = new POSButton("  Agregar", new Color(16, 185, 129));
+        btnEliminar  = new POSButton("  Eliminar", new Color(253, 126, 20));
+        btnLimpiar   = new POSButton("  Limpiar", new Color(239, 68, 68));
+
+        btnFacturas  = new POSButton("  Facturas", new Color(59, 130, 246));
+        btnClientes  = new POSButton("  Registrar", new Color(59, 130, 246));
+        btnEmpleados = new POSButton("️ Empleados", new Color(59, 130, 246));
+
+        // ESPACIADO REDUCIDO
+        int space = 8;
+
+        left.add(Box.createVerticalStrut(12));
+        left.add(btnAgregar);   left.add(Box.createVerticalStrut(space));
+        left.add(btnEliminar);  left.add(Box.createVerticalStrut(space));
+        left.add(btnLimpiar);   left.add(Box.createVerticalStrut(space + 6));
+        left.add(btnFacturas);  left.add(Box.createVerticalStrut(space));
+        left.add(btnClientes);  left.add(Box.createVerticalStrut(space));
+        left.add(btnEmpleados);
+        left.add(Box.createVerticalGlue());
+
+        cp.add(left, BorderLayout.WEST);
+
+        // CENTER CONTENT
+        JPanel middle = new JPanel();
+        middle.setLayout(new BoxLayout(middle, BoxLayout.Y_AXIS));
+        middle.setBackground(new Color(245, 247, 246));
+        middle.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         // TABLA PRODUCTOS
-        tablaProductos.setFont(new Font("Dialog", Font.BOLD, 18));
-        tablaProductos.setRowHeight(40);
-
-        tablaProductos.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][]{},
-                new String[]{"ID", "Nombre", "Precio"}
+        tablaProductos = new JTable(new DefaultTableModel(
+                new Object[]{"ID", "Producto", "Precio", "Stock"}, 0
         ));
 
-        jScrollPane1.setViewportView(tablaProductos);
-        jScrollPane1.setPreferredSize(new Dimension(900, 200));
+        tablaProductos.setRowHeight(45);
+        tablaProductos.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        tablaProductos.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 22));
 
-        // TABLA CARRITO (CORREGIDA)
-        tablaCarrito.setFont(new Font("Dialog", Font.BOLD, 18));
-        tablaCarrito.setRowHeight(40);
+        JScrollPane spProductos = new JScrollPane(tablaProductos);
+        spProductos.setPreferredSize(new Dimension(1200, 420));
+        middle.add(spProductos);
+        middle.add(Box.createVerticalStrut(10));
 
-        tablaCarrito.setModel(new javax.swing.table.DefaultTableModel(
-                new Object[][]{},
-                new String[]{"Cantidad", "Producto", "Subtotal"}
+        // CARRITO
+        tablaCarrito = new JTable(new DefaultTableModel(
+                new Object[]{"Cant", "Producto", "Subtotal"}, 0
         ));
+        tablaCarrito.setRowHeight(45);
+        tablaCarrito.setFont(new Font("Segoe UI", Font.PLAIN, 20));
+        tablaCarrito.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 22));
 
-        jScrollPane2.setViewportView(tablaCarrito);
-        jScrollPane2.setPreferredSize(new Dimension(900, 200));
+        JScrollPane spCarrito = new JScrollPane(tablaCarrito);
+        spCarrito.setPreferredSize(new Dimension(1200, 380));
 
-        // ACCIONES
-        btnAgregar.addActionListener(evt -> agregarAlCarrito());
-        btnEliminar.addActionListener(evt -> eliminarProductoCarrito());
-        btnLimpiar.addActionListener(evt -> limpiarCarrito());
-        btnPagar.addActionListener(evt -> pagar());
-        btnBuscarFactura.addActionListener(evt -> abrirBuscadorFacturas());
-        btnAdministrarClientes.addActionListener(evt -> abrirAdministrarClientes(""));
-        btnAdministrarEmpleados.addActionListener(evt -> abrirAdministrarEmpleados());
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(Color.WHITE);
+        card.add(spCarrito, BorderLayout.CENTER);
 
-        lblCedula.setText("Cédula Cliente:");
-        lblCedula.setFont(new Font("Dialog", Font.BOLD, 18));
+        // FOOTER CARRITO
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.setBackground(Color.WHITE);
 
-        txtCedula.setFont(new Font("Dialog", Font.BOLD, 18));
-        txtCedula.setPreferredSize(new Dimension(200, 35));
+        JLabel lblTotal = new JLabel("TOTAL: ");
+        lblTotal.setFont(new Font("Segoe UI", Font.BOLD, 24));
 
-        // LAYOUT (AJUSTADO A 1024×768)
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
+        lblTotalValue = new JLabel("₡0.00");
+        lblTotalValue.setFont(new Font("Segoe UI", Font.BOLD, 28));
+        lblTotalValue.setForeground(new Color(16, 185, 129));
 
-        layout.setHorizontalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup().addContainerGap()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
-                                        .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 980, Short.MAX_VALUE)
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(btnAgregar)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnEliminar)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnLimpiar)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnBuscarFactura)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnAdministrarClientes)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnAdministrarEmpleados))
-                                        .addGroup(layout.createSequentialGroup()
-                                                .addComponent(lblCedula)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 200, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                                .addComponent(btnPagar)))
-                                .addContainerGap())
-        );
+        JPanel totalPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        totalPanel.setBackground(Color.WHITE);
+        totalPanel.add(lblTotal);
+        totalPanel.add(lblTotalValue);
 
-        layout.setVerticalGroup(
-                layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addGroup(layout.createSequentialGroup().addContainerGap()
-                                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(btnAgregar)
-                                        .addComponent(btnEliminar)
-                                        .addComponent(btnLimpiar)
-                                        .addComponent(btnBuscarFactura)
-                                        .addComponent(btnAdministrarClientes)
-                                        .addComponent(btnAdministrarEmpleados))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 220, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(15)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(lblCedula)
-                                        .addComponent(txtCedula, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnPagar))
-                                .addContainerGap(15, Short.MAX_VALUE))
-        );
+        footer.add(totalPanel, BorderLayout.NORTH);
+
+        JPanel payPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        payPanel.setBackground(Color.WHITE);
+
+        txtCedula = new JTextField();
+        txtCedula.setPreferredSize(new Dimension(260, 40));
+        txtCedula.setFont(new Font("Segoe UI", Font.PLAIN, 22));
+
+        btnPagar = new POSButton(" Pagar", new Color(16, 185, 129));
+        btnPagar.setPreferredSize(new Dimension(300, 64));
+
+        payPanel.add(new JLabel("Cédula: "));
+        payPanel.add(txtCedula);
+        payPanel.add(Box.createHorizontalStrut(12));
+        payPanel.add(btnPagar);
+
+        footer.add(payPanel, BorderLayout.SOUTH);
+
+        card.add(footer, BorderLayout.SOUTH);
+
+        middle.add(card);
+        cp.add(middle, BorderLayout.CENTER);
+
+        // EVENTOS
+        btnAgregar.addActionListener(e -> agregarAlCarrito());
+        btnEliminar.addActionListener(e -> eliminarProductoCarrito());
+        btnLimpiar.addActionListener(e -> limpiarCarrito());
+        btnPagar.addActionListener(e -> pagar());
+
+        btnFacturas.addActionListener(e -> new BuscarFacturaFrame().setVisible(true));
+        btnClientes.addActionListener(e -> new AdministrarClientesFrame(clienteRepo).setVisible(true));
+        btnEmpleados.addActionListener(e -> new AdministrarEmpleadosFrame(empleadoRepo).setVisible(true));
     }
 
+    // ---------------------------------------------------------------------
+    // CLASES AUXILIARES
+    // ---------------------------------------------------------------------
+    private static class Agregado {
+        int cantidad = 0;
+        String nombre;
+        double subtotal = 0;
+        int id;
 
-    // VARIABLES
-    private javax.swing.JButton btnAgregar;
-    private javax.swing.JButton btnEliminar;
-    private javax.swing.JButton btnLimpiar;
-    private javax.swing.JButton btnPagar;
-    private javax.swing.JButton btnBuscarFactura;
-    private javax.swing.JButton btnAdministrarClientes;
-    private javax.swing.JButton btnAdministrarEmpleados;
-    private javax.swing.JLabel lblCedula;
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTable tablaProductos;
-    private javax.swing.JTable tablaCarrito;
-    private javax.swing.JTextField txtCedula;
+        Agregado(int id, String nombre, double precioUnit) {
+            this.id = id;
+            this.nombre = nombre;
+            this.subtotal = 0;
+            this.cantidad = 0;
+        }
 
-    public static void main(String args[]) {
-        java.awt.EventQueue.invokeLater(() -> new MainMenu().setVisible(true));
+        void add(Producto p) {
+            cantidad++;
+            subtotal += p.getPrecio();
+        }
     }
-}
 
+    private static class POSButton extends JButton {
+        POSButton(String text, Color bg) {
+            super(text);
+            setFont(new Font("Segoe UI", Font.BOLD, 26));
+            setBackground(bg);
+            setForeground(Color.WHITE);
+            setFocusPainted(false);
+            setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
+            setPreferredSize(new Dimension(300, 84));
+        }
+    }
 
-// ===============================================================
-//                 BOTÓN PERSONALIZADO ESTILO POS
-// ===============================================================
-class POSButton extends JButton {
-
-    public POSButton(String text) {
-        super(text);
-        setFont(new Font("Dialog", Font.BOLD, 18));
-        setBackground(new Color(168, 208, 141));
-        setForeground(Color.BLACK);
-        setFocusPainted(false);
-        setBorderPainted(false);
-        setOpaque(true);
-
-        // 👇 BOTONES MÁS COMPACTOS (PARA 1024PX DE ANCHO)
-        setPreferredSize(new Dimension(150, 55));
-
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
-        setBorder(BorderFactory.createCompoundBorder(
-                BorderFactory.createLineBorder(new Color(120, 150, 100), 2),
-                BorderFactory.createEmptyBorder(10, 20, 10, 20)
-        ));
-
-        addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent e) {
-                setBackground(new Color(140, 230, 150));
-            }
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent e) {
-                setBackground(new Color(168, 208, 141));
-            }
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            MainMenu m = new MainMenu();
+            m.setVisible(true);
         });
     }
 }
