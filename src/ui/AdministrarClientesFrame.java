@@ -24,7 +24,6 @@ public class AdministrarClientesFrame extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout(15, 15));
-        getContentPane().setBackground(new Color(245, 245, 245));
 
         initComponents();
         cargarTabla();
@@ -49,7 +48,7 @@ public class AdministrarClientesFrame extends JFrame {
 
         int y = 0;
 
-        // CEDULA
+        // CÉDULA
         gbc.gridx = 0; gbc.gridy = y;
         JLabel lblCedula = new JLabel("Cédula:");
         lblCedula.setFont(labelFont);
@@ -74,7 +73,7 @@ public class AdministrarClientesFrame extends JFrame {
         txtNombre.setBorder(BorderFactory.createLineBorder(new Color(160, 160, 160)));
         card.add(txtNombre, gbc);
 
-        // TELEFONO
+        // TELÉFONO
         y++;
         gbc.gridx = 0; gbc.gridy = y;
         JLabel lblTelefono = new JLabel("Teléfono:");
@@ -151,6 +150,31 @@ public class AdministrarClientesFrame extends JFrame {
         add(new JScrollPane(tablaClientes), BorderLayout.CENTER);
     }
 
+    // =====================================================================
+    // VALIDACIONES
+    // =====================================================================
+
+    private boolean validarCedula(String cedula) {
+        return cedula.matches("\\d+");
+    }
+
+    private boolean validarNombre(String nombre) {
+        return nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+");
+    }
+
+    private boolean validarTelefono(String telefono) {
+        return telefono.matches("\\d{8,12}");
+    }
+
+    private boolean error(String msg) {
+        JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
+        return false;
+    }
+
+    // =====================================================================
+    // CRUD
+    // =====================================================================
+
     private void cargarTabla() {
         DefaultTableModel model = (DefaultTableModel) tablaClientes.getModel();
         model.setRowCount(0);
@@ -162,100 +186,73 @@ public class AdministrarClientesFrame extends JFrame {
             });
         }
     }
-private boolean validarCedula(String cedula) {
-    return cedula.matches("\\d+"); // Solo números
-}
-
-private boolean validarNombre(String nombre) {
-    return nombre.matches("[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+"); // Solo letras y espacios
-}
-
-private boolean validarTelefono(String telefono) {
-    return telefono.matches("\\d{8,12}"); // Solo números y 8-12 dígitos
-}
-
-// Mostrar mensaje y return false
-private boolean error(String msg) {
-    JOptionPane.showMessageDialog(this, msg, "Error", JOptionPane.ERROR_MESSAGE);
-    return false;
-}
 
     private void agregarCliente() {
-    String cedula = txtCedula.getText().trim();
-    String nombre = txtNombre.getText().trim();
-    String telefono = txtTelefono.getText().trim();
+        String cedula = txtCedula.getText().trim();
+        String nombre = txtNombre.getText().trim();
+        String telefono = txtTelefono.getText().trim();
 
-    // Validaciones
-    if (cedula.isEmpty() || nombre.isEmpty() || telefono.isEmpty()) {
-        error("Complete todos los campos.");
-        return;
+        if (cedula.isEmpty() || nombre.isEmpty() || telefono.isEmpty()) {
+            error("Complete todos los campos.");
+            return;
+        }
+
+        if (!validarCedula(cedula)) {
+            error("La cédula debe contener solo números.");
+            return;
+        }
+
+        if (!validarNombre(nombre)) {
+            error("El nombre solo puede contener letras y espacios.");
+            return;
+        }
+
+        if (!validarTelefono(telefono)) {
+            error("El teléfono debe tener entre 8 y 12 dígitos numéricos.");
+            return;
+        }
+
+        if (clienteRepo.getById(cedula) != null) {
+            error("Ya existe un cliente con esa cédula.");
+            return;
+        }
+
+        clienteRepo.add(new Cliente(cedula, nombre, telefono));
+        cargarTabla();
+        limpiar();
+        JOptionPane.showMessageDialog(this, "Cliente agregado con éxito.");
     }
 
-    if (!validarCedula(cedula)) {
-        error("La cédula solo debe contener números.");
-        return;
+    private void modificarCliente() {
+        String cedula = txtCedula.getText().trim();
+        Cliente existente = clienteRepo.getById(cedula);
+
+        if (existente == null) {
+            error("Cliente no encontrado.");
+            return;
+        }
+
+        String nombre = txtNombre.getText().trim();
+        String telefono = txtTelefono.getText().trim();
+
+        if (!validarNombre(nombre)) {
+            error("Nombre inválido.");
+            return;
+        }
+
+        if (!validarTelefono(telefono)) {
+            error("Teléfono inválido.");
+            return;
+        }
+
+        existente.setNombre(nombre);
+        existente.setTelefono(telefono);
+
+        clienteRepo.update(existente);
+        cargarTabla();
+        limpiar();
+        JOptionPane.showMessageDialog(this, "Cliente modificado con éxito.");
     }
-
-    if (!validarNombre(nombre)) {
-        error("El nombre solo puede contener letras y espacios.");
-        return;
-    }
-
-    if (!validarTelefono(telefono)) {
-        error("El teléfono debe contener solo números y tener entre 8 y 12 dígitos.");
-        return;
-    }
-
-    if (clienteRepo.getById(cedula) != null) {
-        error("La cédula ya existe en el sistema.");
-        return;
-    }
-
-    // Agregar cliente
-    clienteRepo.add(new Cliente(cedula, nombre, telefono));
-    cargarTabla();
-    limpiar();
-    JOptionPane.showMessageDialog(this, "Cliente agregado con éxito.");
-}
-
-
-   private void modificarCliente() {
-    String cedula = txtCedula.getText().trim();
-    String nombre = txtNombre.getText().trim();
-    String telefono = txtTelefono.getText().trim();
-
-    Cliente existente = clienteRepo.getById(cedula);
-
-    if (existente == null) {
-        error("Cliente no encontrado.");
-        return;
-    }
-
-    // Validaciones
-    if (nombre.isEmpty() || telefono.isEmpty()) {
-        error("Complete todos los campos.");
-        return;
-    }
-
-    if (!validarNombre(nombre)) {
-        error("El nombre solo puede contener letras y espacios.");
-        return;
-    }
-
-    if (!validarTelefono(telefono)) {
-        error("El teléfono debe contener solo números y tener entre 8 y 12 dígitos.");
-        return;
-    }
-
-    existente.setNombre(nombre);
-    existente.setTelefono(telefono);
-
-    clienteRepo.update(existente);
-    cargarTabla();
-    limpiar();
-    JOptionPane.showMessageDialog(this, "Cliente modificado con éxito.");
-}
-
 
     private void eliminarCliente() {
         String cedula = txtCedula.getText().trim();
@@ -263,8 +260,9 @@ private boolean error(String msg) {
         if (clienteRepo.delete(cedula)) {
             cargarTabla();
             limpiar();
+            JOptionPane.showMessageDialog(this, "Cliente eliminado.");
         } else {
-            JOptionPane.showMessageDialog(this, "Cliente no encontrado.");
+            error("Cliente no encontrado.");
         }
     }
 

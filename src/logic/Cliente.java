@@ -12,6 +12,10 @@ public class Cliente {
         this.telefono = telefono;
     }
 
+    // ============================
+    // GETTERS Y SETTERS
+    // ============================
+
     public String getCedula() {
         return cedula;
     }

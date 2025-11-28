@@ -84,3 +84,29 @@ CEDULA:604980714
 5,Pala Agrícola,12.99
 TOTAL:51.96
 ---
+CEDULA:2
+4,Alimento Caballos 25kg,45.0
+3,Alimento Gallinas 40kg,32.0
+1,Concentrado Perros 20kg,25.5
+2,Concentrado Gatos 10kg,18.75
+1,Concentrado Perros 20kg,25.5
+4,Alimento Caballos 25kg,45.0
+TOTAL:191.75
+---
+CEDULA:208850748
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:10,Plato Mascota,2800.0
+PRODUCTO:6,Juguete Pelota,2500.0
+END
+
+CEDULA:208850748
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+PRODUCTO:9,Cortaúñas,3000.0
+END
+

@@ -144,7 +144,8 @@ public class MainMenu extends javax.swing.JFrame {
         }
 
         Factura factura = new Factura(cedula, carrito.obtenerProductosComoArray());
-        facturaRepo.guardarFactura(factura);
+        facturaRepo.guardar(factura);
+
 
         carrito.limpiar();
         cargarCarrito();

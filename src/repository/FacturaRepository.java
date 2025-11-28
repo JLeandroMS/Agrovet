@@ -8,76 +8,82 @@ import java.util.ArrayList;
 
 public class FacturaRepository {
 
-    private final String FILE_NAME = "facturas.txt";
+    private final String FILE_PATH = "facturas.txt";
 
     public FacturaRepository() {
-        File f = new File(FILE_NAME);
-
+        File f = new File(FILE_PATH);
         try {
-            if (!f.exists()) {
-                f.createNewFile();
-            }
-        } catch (Exception e) {
-            System.out.println("Error creando archivo de facturas: " + e.getMessage());
+            if (!f.exists()) f.createNewFile();
+        } catch (IOException e) {
+            System.out.println("Error creando facturas.txt");
         }
     }
 
-    // =====================================================
-    // GUARDAR FACTURA
-    // =====================================================
-    public void guardarFactura(Factura factura) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME, true))) {
+    // ========================================================
+    //                     GUARDAR FACTURA
+    // ========================================================
+    public void guardar(Factura factura) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
 
-            writer.write("CEDULA:" + factura.getCedula());
-            writer.newLine();
+            bw.write("CEDULA:" + factura.getCedula());
+            bw.newLine();
 
             for (Producto p : factura.getProductos()) {
-                writer.write(p.getId() + "," + p.getNombre() + "," + p.getPrecio());
-                writer.newLine();
+                bw.write("PRODUCTO:" + p.getId() + "," + p.getNombre() + "," + p.getPrecio());
+                bw.newLine();
             }
 
-            writer.write("TOTAL:" + factura.total());
-            writer.newLine();
-            writer.write("---");
-            writer.newLine();
+            bw.write("END");
+            bw.newLine();
+            bw.newLine();
 
-        } catch (Exception e) {
-            System.out.println("Error guardando factura: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("ERROR guardando factura: " + e.getMessage());
         }
     }
 
-    // =====================================================
-    // BUSCAR FACTURAS POR CEDULA
-    // =====================================================
-    public ArrayList<String> buscarPorCedula(String cedula) {
+    // Alias opcional (si tu código llama guardarFactura)
+    public void guardarFactura(Factura f) {
+        guardar(f);
+    }
 
-        ArrayList<String> resultados = new ArrayList<>();
+    // ========================================================
+    //               BUSCAR FACTURAS POR CÉDULA
+    // ========================================================
+    public ArrayList<String> buscarPorCedula(String cedulaBuscada) {
+        ArrayList<String> encontrados = new ArrayList<>();
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
+
             String linea;
-            boolean facturaEncontrada = false;
-            StringBuilder facturaCompleta = new StringBuilder();
+            StringBuilder facturaActual = new StringBuilder();
+            boolean coincideCedula = false;
 
-            while ((linea = reader.readLine()) != null) {
+            while ((linea = br.readLine()) != null) {
 
-                if (linea.startsWith("CEDULA:" + cedula)) {
-                    facturaEncontrada = true;
-                    facturaCompleta = new StringBuilder();
-                    facturaCompleta.append(linea).append("\n");
-                } else if (linea.equals("---")) {
-                    if (facturaEncontrada) {
-                        resultados.add(facturaCompleta.toString());
-                        facturaEncontrada = false;
+                if (linea.startsWith("CEDULA:")) {
+                    if (linea.equals("CEDULA:" + cedulaBuscada)) {
+                        coincideCedula = true;
+                        facturaActual = new StringBuilder();
+                        facturaActual.append(linea).append("\n");
+                    } else {
+                        coincideCedula = false;
                     }
-                } else if (facturaEncontrada) {
-                    facturaCompleta.append(linea).append("\n");
+                } else if (linea.equals("END")) {
+                    if (coincideCedula) {
+                        encontrados.add(facturaActual.toString());
+                    }
+                } else {
+                    if (coincideCedula) {
+                        facturaActual.append(linea).append("\n");
+                    }
                 }
             }
 
-        } catch (Exception e) {
-            System.out.println("Error buscando facturas: " + e.getMessage());
+        } catch (IOException e) {
+            System.out.println("ERROR leyendo facturas: " + e.getMessage());
         }
 
-        return resultados;
+        return encontrados;
     }
 }

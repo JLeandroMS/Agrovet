@@ -1,28 +1,14 @@
 package logic;
 
-/**
- * Representa a un empleado del sistema POS.
- * Contiene información básica personal y laboral.
- */
 public class Empleado {
 
     private String cedula;
     private String nombre;
     private String telefono;
     private String ocupacion;
-    private String tipo; // Veterinario o Cashier
+    private String tipo;
     private double salario;
 
-    /**
-     * Constructor completo de empleado.
-     *
-     * @param cedula     Identificación del empleado.
-     * @param nombre     Nombre completo del empleado.
-     * @param telefono   Número de contacto del empleado.
-     * @param ocupacion  Ocupación o rol interno dentro del comercio.
-     * @param tipo       Tipo de empleado (por ejemplo: "Veterinario" o "Cashier").
-     * @param salario    Salario mensual del empleado.
-     */
     public Empleado(String cedula, String nombre, String telefono, String ocupacion, String tipo, double salario) {
         this.cedula = cedula;
         this.nombre = nombre;
@@ -32,7 +18,9 @@ public class Empleado {
         this.salario = salario;
     }
 
+    // ============================
     // GETTERS Y SETTERS
+    // ============================
 
     public String getCedula() {
         return cedula;
@@ -80,5 +68,17 @@ public class Empleado {
 
     public void setSalario(double salario) {
         this.salario = salario;
+    }
+
+    @Override
+    public String toString() {
+        return "Empleado{" +
+                "cedula='" + cedula + '\'' +
+                ", nombre='" + nombre + '\'' +
+                ", telefono='" + telefono + '\'' +
+                ", ocupacion='" + ocupacion + '\'' +
+                ", tipo='" + tipo + '\'' +
+                ", salario=" + salario +
+                '}';
     }
 }
